@@ -25,3 +25,43 @@ _DDG_MCP_URL = os.getenv('DDG_MCP_URL', "http://localhost:8051/mcp")
 # 4. Create DIALApp with deployment_name `web-search-agent` (the same as in the core config) and impl is instance
 #    of the WebSearchApplication
 # 5. Add starter with DIALApp, port is 5003 (see core config)
+class WebSearchApplication(ChatCompletion):
+    def __init__(self):
+        self.tools: list[BaseTool] = []
+
+    async def create_tools(self):    
+        tools: list[BaseTool] = [
+            CalculationsAgentTool(endpoint=DIAL_ENDPOINT),
+            ContentManagementAgentTool(endpoint=DIAL_ENDPOINT)
+        ]
+        mcp_client = await MCPClient.create(mcp_server_url=_DDG_MCP_URL)
+        for mcp_tool_model in await mcp_client.get_tools():
+            tools.append(
+                MCPTool(
+                    client=mcp_client,
+                    mcp_tool_model=mcp_tool_model,
+                )
+            )
+
+        return tools
+
+    async def chat_completion(self, request: Request, response: Response) -> None:
+        with response.create_single_choice() as choice:
+            await WebSearchAgent(
+                tools=await self.create_tools(), 
+                endpoint=DIAL_ENDPOINT
+                ).handle_request(
+                    deployment_name=DEPLOYMENT_NAME, 
+                    choice=choice, 
+                    request=request, 
+                    response=response
+                )
+
+app = DIALApp()
+app.add_chat_completion(
+    deployment_name="web-search-agent",
+    impl=WebSearchApplication()
+)
+
+if __name__ == "__main__":
+    uvicorn.run(app, host="0.0.0.0", port=5003)

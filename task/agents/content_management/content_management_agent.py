@@ -6,5 +6,10 @@ from task.tools.base_tool import BaseTool
 #TODO:
 # Just simply extend the BaseAgent and provide the constructor
 
-class ContentManagementAgent:
-    ...
+class ContentManagementAgent(BaseAgent):
+    def __init__(self, tools: list[BaseTool], endpoint: str):
+        super().__init__(
+            system_prompt=SYSTEM_PROMPT,
+            tools=tools,
+            endpoint=endpoint
+        )

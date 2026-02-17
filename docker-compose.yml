@@ -8,7 +8,7 @@ services:
     ports:
       - "3000:3000"
     image: epam/ai-dial-chat:development
-#    platform: linux/amd64
+    platform: linux/amd64
     depends_on:
       - themes
       - core
@@ -58,8 +58,8 @@ services:
     volumes:
       - ./settings:/opt/settings
       - ${DIAL_DIR:-.}/core:/opt/config
-      - ${DIAL_DIR:-.}/core-logs/:/app/log
-      - ${DIAL_DIR:-.}/core-data/:/app/data
+      # - ${DIAL_DIR:-.}/core-logs/:/app/log
+      # - ${DIAL_DIR:-.}/core-data/:/app/data
 
   adapter-dial:
     image: epam/ai-dial-adapter-dial:development

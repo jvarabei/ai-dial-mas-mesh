@@ -6,4 +6,9 @@ from task.tools.base_tool import BaseTool
 # Just simply extend the BaseAgent and provide the constructor
 
 class CalculationsAgent(BaseAgent):
-    ...
+    def __init__(self, tools: list[BaseTool], endpoint: str):
+        super().__init__(
+            system_prompt=SYSTEM_PROMPT,
+            tools=tools,
+            endpoint=endpoint
+        )

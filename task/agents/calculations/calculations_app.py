@@ -26,4 +26,42 @@ from task.utils.constants import DIAL_ENDPOINT, DEPLOYMENT_NAME
 #    the CalculationsApplication
 # 5. Add starter with DIALApp, port is 5001 (see core config)
 
-raise NotImplementedError()
+class CalculationsApplication(ChatCompletion):
+    def __init__(self):
+        self.tools: list[BaseTool] = []
+
+    async def create_tools(self):    
+        tools: list[BaseTool] = [
+            SimpleCalculatorTool(),
+            await PythonCodeInterpreterTool.create(
+                mcp_url="http://localhost:8050/mcp",
+                tool_name="execute_code",
+                dial_endpoint=DIAL_ENDPOINT
+            ),
+            ContentManagementAgentTool(endpoint=DIAL_ENDPOINT),
+            WebSearchAgentTool(endpoint=DIAL_ENDPOINT)
+        ]
+        return tools
+
+    async def chat_completion(self, request: Request, response: Response) -> None:
+        with response.create_single_choice() as choice:
+            await CalculationsAgent(
+                tools=await self.create_tools(), 
+                endpoint=DIAL_ENDPOINT
+                ).handle_request(
+                    deployment_name=DEPLOYMENT_NAME, 
+                    choice=choice, 
+                    request=request, 
+                    response=response
+                )
+            
+
+app = DIALApp()
+app.add_chat_completion(
+    deployment_name="calculations-agent",
+    impl=CalculationsApplication()
+)
+
+if __name__ == "__main__":
+    uvicorn.run(app, host="0.0.0.0", port=5001)
+
